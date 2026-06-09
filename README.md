@@ -164,3 +164,4 @@ Perilaku penyimpanan:
 - `mqttbrkrX_short` hanya relevan untuk mode CSV
 - jika `mqttbrkrX_json=true`, payload dikirim sebagai JSON
 - field sensor tanah di JSON hanya muncul jika nilainya valid
+# ospit
