@@ -2,34 +2,25 @@
 -- BEGIN
 ------  Irrigation system
 -- Enable irrigation?
-i_nbld=true -- boolean
+i_nbld=false -- boolean
 
--- Humidity level when section 1 irrigation stops
-i_lvl1=60
+-- Humidity level when valve/pump 1 closes/stops
+i_lvl1=80
 
--- Humidity level when section 2 irrigation stops
-i_lvl2=60
+-- Humidity level when valve/pump 2 closes/stops
+i_lvl2=80
 
--- Humidity level when section 3 irrigation stops  
-i_lvl3=60
-
--- Humidity level when section 4 irrigation stops  
-i_lvl4=60
+-- Humidity level when valve/pump 3 closes/stops
+i_lvl3=80
 
 -- Is a tank gauge sensor connected?
 i_tanksens=false -- boolean
 
--- Maximum irrigation time per section (in minutes)
-i_vlv_opn=1
+-- Max opening time of valves (in minutes)
+i_vlv_opn=5
 
 -- Hour of day when irrigation starts
-i_hr=11
-
--- Use pump port as default load port
-pump_is_load=true -- boolean
-
--- Use section 3 port for USB supply
-usb_load=true -- boolean
+i_hr=3
 
 ------ Battery and Solar Module
 -- Rated capacity of battery in Amperehours (Ah)
@@ -43,21 +34,21 @@ av_pwr=1
 ------ WIFI
 -- WiFi mode
 -- One of: 1 = STATION, 2 = SOFTAP, 3 = STATIONAP, 4 = NULLMODE
-wlanmode=1 -- option 1;2;3;4
+wlanmode=2 -- option 1;2;3;4
 
 ---- Station
 -- Wifi station AP SSID (the existing WiFi-AP that the device should connect to as a WiFi client)
-sta_ssid="Pakebun"
+sta_ssid="Example"
 
 -- WPA key to connect to the existing AP as WiFi client
-sta_pwd="pakebunjaya123" --password
+sta_pwd="12345678" --password
 
 -- Station hostname (leave blank for default)
-sta_hostname="Ospit-CR"
+sta_hostname=""
 
 ---- Accesspoint
 -- Accesspoint SSID
-ap_ssid="OSPIT"
+ap_ssid="OpenMPPT"
 
 -- Accesspoint WPA key (can not be blank)
 ap_pwd="12345678" -- password
@@ -91,7 +82,7 @@ nextreboot=7200
 
 -- The logic of the local timezone setting in the SDK is reversed.
 -- To get UTC+2 you actually need to set UTC-2.
-timezone="CEST-2"
+timezone="CEST-1"
 
 -- Latitude of Geolocation
 lat=52.4997
@@ -100,7 +91,7 @@ lat=52.4997
 long=13.3755
 
 -- Node-ID
-nodeid="001"
+nodeid="ospit"
 
 -- Verbosity level: 0 (critical errors only)
 -- up to 4 (very verbose)
@@ -110,22 +101,18 @@ verbose=1 -- option 1;2;3;4
 -- Enable MQTT?
 mqtt_enabled=true -- boolean
 -- MQTT broker to connect to
-mqttbrkr1_host="pentarium.id"
+mqttbrkr1_host="isems.mqtthub.net"
 -- Port to connect to
 mqttbrkr1_port=1883
--- MQTT username (leave blank for anonymous access)
-mqttbrkr1_user="penta"
--- MQTT password (leave blank for anonymous access)
-mqttbrkr1_password="penta123" -- password
 -- The telemetry channel to send our data to. 
-mqttbrkr1_channel="ospit/"
+mqttbrkr1_channel="isems/testdrive/foobar/"
 -- Close connection after sending data?
 -- Recommended if setting up 2 brokers
 mqttbrkr1_close=true -- boolean
 -- Use only last (newest) csv data line
 -- If set to false, the last 5 csv data lines are send
 -- not used if we send json data
-mqttbrkr1_short=true -- boolean
+mqttbrkr1_short=false -- boolean
 -- Send JSON data instead of CSV data
 mqttbrkr1_json=true -- boolean
 
@@ -133,10 +120,6 @@ mqttbrkr1_json=true -- boolean
 mqttbrkr2_host=""
 -- Port to connect to
 mqttbrkr2_port=1883
--- MQTT username (leave blank for anonymous access)
-mqttbrkr2_user=""
--- MQTT password (leave blank for anonymous access)
-mqttbrkr2_password="" -- password
 -- Telemetry channel to send metrics to.
 mqttbrkr2_channel=""
 -- Close connection after sending data
@@ -144,6 +127,6 @@ mqttbrkr2_channel=""
 mqttbrkr2_close=true -- boolean
 -- Use only last (newest) csv data line
 -- not used if we send json data
-mqttbrkr2_short=true -- boolean
+mqttbrkr2_short=false -- boolean
 -- Send JSON data instead of CSV data
 mqttbrkr2_json=true -- boolean

@@ -1,82 +1,5 @@
 -- Telemetry implementation for MQTT
 
-local control = require('control')
-
-local function mqtt_control_topic()
-    return "subs/" .. nodeid
-end
-
-local function mqtt_normalize_command(cmd)
-    if (cmd == nil) then
-        return nil
-    end
-    local normalized = string.lower(tostring(cmd))
-    if (normalized == 'turn_on' or normalized == 'turn on' or normalized == 'on') then
-        return 'turn_ON'
-    end
-    if (normalized == 'turn_off' or normalized == 'turn off' or normalized == 'off') then
-        return 'turn_OFF'
-    end
-    if (normalized == 'status') then
-        return 'status'
-    end
-    return nil
-end
-
-local function mqtt_parse_control_message(message)
-    if (message == nil or message == '') then
-        return nil, nil
-    end
-
-    local ok, decoded = pcall(sjson.decode, message)
-    if (ok and type(decoded) == 'table') then
-        return mqtt_normalize_command(decoded.command or decoded.cmd or decoded.action),
-               decoded.item or decoded.output or decoded.target
-    end
-
-    local cmd, item = message:match("^%s*([^%s/]+)/([%w_]+)%s*$")
-    if (cmd ~= nil and item ~= nil) then
-        return mqtt_normalize_command(cmd), item
-    end
-
-    cmd, item = message:match("^%s*(%S+)%s+([%w_]+)%s*$")
-    if (cmd ~= nil and item ~= nil) then
-        return mqtt_normalize_command(cmd), item
-    end
-
-    return nil, nil
-end
-
-local function mqtt_handle_control_message(topic, message)
-    if (topic ~= mqtt_control_topic()) then
-        return
-    end
-
-    local cmd, item = mqtt_parse_control_message(message)
-    if (cmd == nil or item == nil) then
-        printv(1, "MQTT control ignored: invalid payload", message)
-        return
-    end
-
-    local result = control.command(cmd, item)
-    if (result == false and cmd ~= 'turn_OFF') then
-        printv(1, "MQTT control failed:", cmd, item)
-        return
-    end
-
-    printv(2, "MQTT control executed:", cmd, item, result)
-end
-
-local function mqtt_subscribe_controls(broker, on_ready)
-    local topic = mqtt_control_topic()
-    broker.subscribe_topic = topic
-    broker.m:subscribe(topic, 1, function(client)
-        broker.subscribed = true
-        printv(2, "Subscribed to MQTT control topic:", topic)
-        on_ready(client)
-    end)
-end
-
 function mqtt_publish(broker)
     local data
     if (broker.short) then
@@ -140,7 +63,7 @@ end
     end
     
     telemetry_channel_node = (broker.channel) .. nodeid
-    mqtt_topic = telemetry_channel_node .. "/data"
+    mqtt_topic = telemetry_channel_node .. "/data.json"
     --[[ Modification for home assistant ]]--
     --[[mqtt_topic = (broker.channel) .. "sensor/" .. nodeid .. "/config" ]]--
     
@@ -151,7 +74,7 @@ printv(2,"Sending this MQTT Data set:", data)
 
     broker.m:publish(mqtt_topic, data, 1, 0, function(client)
         printv(2,"########## Success: MQTT message sent.")
-        if (broker.close and broker.subscribe_topic == nil) then
+        if (broker.close) then
             broker.m=nil
         end
     end)
@@ -171,29 +94,24 @@ function mqtt_connect(broker)
     printv(2,"########## MQTT broker host:", broker.host)
     
     
-    if (broker.user ~= nil and broker.user ~= '') then
-        m = mqtt.Client("isems-" .. nodeid, 120, broker.user, broker.password)
-    else
-        m = mqtt.Client("isems-" .. nodeid, 120)
-    end
+    m = mqtt.Client("isems-" .. nodeid, 120)
     broker.m=m
     m:on("connect", function(client) printv(2,"########## Connected to MQTT broker") end)
-    m:on("offline", function(client) printv(2,"########## MQTT broker " .. broker.host .. " offline") ; broker.m=nil ; broker.subscribed=nil end)
+    m:on("offline", function(client) printv(2,"########## MQTT broker " .. broker.host .. " offline") ; broker.m=nil end)
 
     -- on publish message receive event
     m:on("message", function(client, topic, message) 
-        printv(2,"######## Topic", topic .. ":" ) 
-        if message ~= nil then
-            printv(2,"######## The MQTT server has received this message:", message)
-        end
-        mqtt_handle_control_message(topic, message)
-    end)
+    printv(2,"######## Topic", topic .. ":" ) 
+    if message ~= nil then
+    printv(2,"######## The MQTT server has received this message:", message)
+    end
+end)
 
    m:connect(broker.host, broker.port, 0,
         function(client)
-            mqtt_subscribe_controls(broker, function()
-	        mqtt_publish(broker)
-            end)
+            -- subscribe topic with qos = 0
+            -- client:subscribe(mqtt_topic, 0, function(client) print("subscribe success") end)
+	    mqtt_publish(broker)
         end,
         function(client, reason)
             printv(1,"########### MQTT connect failed. Reason: " .. reason)
@@ -205,7 +123,7 @@ local function get_config()
     mqttbrkrs={}
     for i=1,2 do
 	local broker={}
-	for _,k in ipairs{'host','port','close','short','json','channel','user','password' } do
+	for _,k in ipairs{'host','port','close','short','json','channel' } do
 	    broker[k]=_G['mqttbrkr'..i..'_'..k]
 	end
 	if (broker.host ~= nil and broker.host ~= '') then

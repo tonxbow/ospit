@@ -43,17 +43,17 @@ av_pwr=1
 ------ WIFI
 -- WiFi mode
 -- One of: 1 = STATION, 2 = SOFTAP, 3 = STATIONAP, 4 = NULLMODE
-wlanmode=1 -- option 1;2;3;4
+wlanmode=2 -- option 1;2;3;4
 
 ---- Station
 -- Wifi station AP SSID (the existing WiFi-AP that the device should connect to as a WiFi client)
-sta_ssid="Pakebun"
+sta_ssid="AP2.freifunk.net"
 
 -- WPA key to connect to the existing AP as WiFi client
-sta_pwd="pakebunjaya123" --password
+sta_pwd="" --password
 
 -- Station hostname (leave blank for default)
-sta_hostname="Ospit-CR"
+sta_hostname="ospit"
 
 ---- Accesspoint
 -- Accesspoint SSID
@@ -100,7 +100,7 @@ lat=52.4997
 long=13.3755
 
 -- Node-ID
-nodeid="001"
+nodeid="ospit-demo"
 
 -- Verbosity level: 0 (critical errors only)
 -- up to 4 (very verbose)
@@ -108,17 +108,13 @@ verbose=1 -- option 1;2;3;4
 
 ---- MQTT-Telemetry configuration
 -- Enable MQTT?
-mqtt_enabled=true -- boolean
+mqtt_enabled=false -- boolean
 -- MQTT broker to connect to
-mqttbrkr1_host="pentarium.id"
+mqttbrkr1_host="isems.mqtthub.net"
 -- Port to connect to
 mqttbrkr1_port=1883
--- MQTT username (leave blank for anonymous access)
-mqttbrkr1_user="penta"
--- MQTT password (leave blank for anonymous access)
-mqttbrkr1_password="penta123" -- password
 -- The telemetry channel to send our data to. 
-mqttbrkr1_channel="ospit/"
+mqttbrkr1_channel="isems/testdrive/foobar/"
 -- Close connection after sending data?
 -- Recommended if setting up 2 brokers
 mqttbrkr1_close=true -- boolean
@@ -133,10 +129,6 @@ mqttbrkr1_json=true -- boolean
 mqttbrkr2_host=""
 -- Port to connect to
 mqttbrkr2_port=1883
--- MQTT username (leave blank for anonymous access)
-mqttbrkr2_user=""
--- MQTT password (leave blank for anonymous access)
-mqttbrkr2_password="" -- password
 -- Telemetry channel to send metrics to.
 mqttbrkr2_channel=""
 -- Close connection after sending data

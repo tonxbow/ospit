@@ -100,7 +100,7 @@ lat=52.4997
 long=13.3755
 
 -- Node-ID
-nodeid="001"
+nodeid="ospit-demo"
 
 -- Verbosity level: 0 (critical errors only)
 -- up to 4 (very verbose)
@@ -113,12 +113,8 @@ mqtt_enabled=true -- boolean
 mqttbrkr1_host="pentarium.id"
 -- Port to connect to
 mqttbrkr1_port=1883
--- MQTT username (leave blank for anonymous access)
-mqttbrkr1_user="penta"
--- MQTT password (leave blank for anonymous access)
-mqttbrkr1_password="penta123" -- password
 -- The telemetry channel to send our data to. 
-mqttbrkr1_channel="ospit/"
+mqttbrkr1_channel="ospit/001"
 -- Close connection after sending data?
 -- Recommended if setting up 2 brokers
 mqttbrkr1_close=true -- boolean
@@ -133,10 +129,6 @@ mqttbrkr1_json=true -- boolean
 mqttbrkr2_host=""
 -- Port to connect to
 mqttbrkr2_port=1883
--- MQTT username (leave blank for anonymous access)
-mqttbrkr2_user=""
--- MQTT password (leave blank for anonymous access)
-mqttbrkr2_password="" -- password
 -- Telemetry channel to send metrics to.
 mqttbrkr2_channel=""
 -- Close connection after sending data

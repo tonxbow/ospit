@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OS PIT Power Output Port Documentation</title>
+  <style>
+    :root {
+      --bg: #f7f8fa;
+      --paper: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #d9dee7;
+      --accent: #2563eb;
+      --code-bg: #f1f5f9;
+      --table-head: #eef4ff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 2rem;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.6;
+    }
+
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 3rem;
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+    }
+
+    h1, h2 {
+      line-height: 1.25;
+      color: #111827;
+    }
+
+    h1 {
+      margin-top: 0;
+      margin-bottom: 1rem;
+      font-size: 2.2rem;
+      letter-spacing: -0.03em;
+    }
+
+    h2 {
+      margin-top: 2.4rem;
+      padding-top: 1.2rem;
+      border-top: 1px solid var(--border);
+      font-size: 1.45rem;
+    }
+
+    p {
+      margin: 1rem 0;
+    }
+
+    ul, ol {
+      padding-left: 1.4rem;
+    }
+
+    li {
+      margin: 0.35rem 0;
+    }
+
+    strong {
+      color: #111827;
+    }
+
+    code {
+      padding: 0.15rem 0.35rem;
+      border-radius: 6px;
+      background: var(--code-bg);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 0.95em;
+    }
+
+    pre {
+      overflow-x: auto;
+      padding: 1rem 1.2rem;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--code-bg);
+      color: #0f172a;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    pre code {
+      padding: 0;
+      background: transparent;
+    }
+
+    table {
+      width: 100%;
+      margin: 1.2rem 0;
+      border-collapse: collapse;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 0.8rem 1rem;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: var(--table-head);
+      font-weight: 700;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .lead {
+      font-size: 1.08rem;
+      color: var(--muted);
+    }
+
+    .note {
+      margin: 1.2rem 0;
+      padding: 1rem 1.2rem;
+      border-left: 4px solid var(--accent);
+      border-radius: 10px;
+      background: #eff6ff;
+    }
+
+    .warning {
+      margin: 1.2rem 0;
+      padding: 1rem 1.2rem;
+      border-left: 4px solid #f59e0b;
+      border-radius: 10px;
+      background: #fffbeb;
+    }
+
+    @media print {
+      body {
+        padding: 0;
+        background: white;
+      }
+
+      main {
+        max-width: none;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+      }
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 1rem;
+      }
+
+      main {
+        padding: 1.5rem;
+      }
+
+      h1 {
+        font-size: 1.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>OSPIT Power Output Port Documentation</h1>
+    <p class="lead">The OSPIT provides four manually or software-controlled general-purpose power output ports.</p>
+
+    <p>These outputs can be used to control irrigation valves, water pumps, or other DC-powered equipment such as USB power sockets, if compatible with 11–14.7 V DC input, or general 12 V devices.</p>
+
+    <p>Although the outputs are versatile, the OSPIT was primarily designed as an automated plant irrigation controller. In its intended configuration, the system can independently irrigate up to four separate plant sections using:</p>
+
+    <ul>
+      <li>up to four water pumps or four solenoid valves</li>
+      <li>up to four soil moisture sensors</li>
+    </ul>
+
+    <h2>Using Solenoid Valves</h2>
+
+    <p>When using four solenoid water valves, the system requires a water source with sufficient pressure.</p>
+
+    <p>The water should also be reasonably clean. Contaminants such as sand, algae, or plant debris may clog the valves or prevent them from sealing properly, which can cause leakage even when the valves are closed.</p>
+
+    <p>If a single central water pump is used to provide pressure for the entire irrigation system, it should be connected to the output labelled:</p>
+
+    <p><strong>Pump+ / Pump-</strong></p>
+
+    <p>The remaining outputs labelled:</p>
+
+    <ul>
+      <li>Valve 1</li>
+      <li>Valve 2</li>
+      <li>Valve 3</li>
+    </ul>
+
+    <p>can then be used to control the water flow through individual solenoid valves.</p>
+
+    <h2>Soil Moisture Sensor System</h2>
+
+    <p>The irrigation software monitors soil conditions using humidity sensors connected via a Modbus-RTU bus.</p>
+
+    <p>The Modbus-RTU interface uses four wires:</p>
+
+    <ul>
+      <li>+12 V DC</li>
+      <li>GND</li>
+      <li>A+</li>
+      <li>B-</li>
+    </ul>
+
+    <p>Up to 35 sensors can be connected to the same bus, and the total cable length may be up to 1200 meters under suitable conditions.</p>
+
+    <p>Each sensor requires a unique Modbus node ID. Duplicate IDs on the same bus will cause communication conflicts.</p>
+
+    <p>The OSPIT sequentially scans the Modbus-RTU bus for sensor node IDs 1 through 4. Each sensor ID is mapped directly to an irrigation output port:</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Sensor Node ID</th>
+          <th>Controlled Output</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>ID #1</td>
+          <td>Valve 1</td>
+        </tr>
+        <tr>
+          <td>ID #2</td>
+          <td>Valve 2</td>
+        </tr>
+        <tr>
+          <td>ID #3</td>
+          <td>Valve 3</td>
+        </tr>
+        <tr>
+          <td>ID #4</td>
+          <td>Pump / Valve 4</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>For example, if the OSPIT detects a sensor with node ID #1, it controls the output labelled <strong>Valve 1</strong> and irrigates plant section 1 during the configured irrigation hour, <code>i_hr</code>.</p>
+
+    <p>The output remains active until at least one of the following conditions is met:</p>
+
+    <ul>
+      <li>The target soil humidity level is reached or exceeded.</li>
+      <li>The maximum irrigation time for the output is reached.</li>
+      <li>The configured irrigation hour has ended.</li>
+    </ul>
+
+    <p>The same logic applies to sensor IDs #2, #3, and #4.</p>
+
+    <p>Irrigation is performed sequentially from section 1 to section 4.</p>
+
+    <p>Sections without matching sensor data are ignored and will not be irrigated.</p>
+
+    <h2>Sensor Configuration</h2>
+
+    <p>New DFRobot soil moisture sensors are typically shipped with Modbus node ID #1 from the factory.</p>
+
+    <p>The OSPIT Modbus-RTU interface operates at:</p>
+
+    <p><strong>9600 baud</strong></p>
+
+    <p>The sensors must be configured to use the same baud rate.</p>
+
+    <p>The OSPIT has been tested with Modbus soil moisture sensors from DFRobot.</p>
+
+    <h2>Changing Sensor Node IDs</h2>
+
+    <p>A command-line utility is included with the OSPIT firmware for changing the node IDs of compatible DFRobot sensors:</p>
+
+    <pre><code>modb-set-nodeid.lua</code></pre>
+
+    <div class="warning">
+      <strong>Advanced users only:</strong> This procedure requires access to the OSPIT command console using the Telnet protocol over WiFi. Incorrect Modbus configuration can easily cause communication problems, so proceed carefully.
+    </div>
+
+    <h2>Step 1 — Connect to the OSPIT WiFi</h2>
+
+    <p>By default, the OSPIT creates a local WiFi access point:</p>
+
+    <ul>
+      <li><strong>SSID:</strong> <code>OSPIT</code></li>
+      <li><strong>Password:</strong> <code>12345678</code></li>
+    </ul>
+
+    <h2>Step 2 — Connect via Telnet</h2>
+
+    <p>Connect to the OSPIT using a Telnet client.</p>
+
+    <p>Login credentials:</p>
+
+    <ul>
+      <li><strong>Username:</strong> <code>lua</code></li>
+      <li><strong>Password:</strong> <code>pass123</code></li>
+    </ul>
+
+    <h2>Step 3 — Start the Configuration Tool</h2>
+
+    <p>Enter the following command:</p>
+
+    <pre><code>dofile("modb-set-nodeid.lua")</code></pre>
+
+    <p>When started without parameters, the program displays usage instructions:</p>
+
+    <pre><code>&gt; dofile("modb-set-nodeid.lua")
+
+MB_OLD_ID missing!
+MB_NEW_ID missing!
+
+USAGE:
+Set old and new global node-id variables for the RTU-Modbus
+before running this script.
+
+Example:
+
+MB_OLD_ID=1
+MB_NEW_ID=2
+dofile("modb-set-nodeid.lua")
+
+MAKE SURE ONLY ONE MODBUS SENSOR IS CONNECTED
+TO THE BUS WHILE DOING THIS,
+OR BE PREPARED FOR TROUBLESHOOTING!</code></pre>
+
+    <p>For example, to change a sensor from node ID #1 to node ID #2:</p>
+
+    <pre><code>MB_OLD_ID=1
+MB_NEW_ID=2
+dofile("modb-set-nodeid.lua")</code></pre>
+
+    <div class="note">
+      Only one unconfigured sensor should be connected to the Modbus bus while changing node IDs. Otherwise, multiple sensors may respond simultaneously and create communication conflicts.
+    </div>
+  </main>
+</body>
+</html>

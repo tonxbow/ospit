@@ -69,7 +69,7 @@ Field penting:
 
 ## MQTT telemetry
 
-OSPIT **saat ini hanya publish telemetry ke MQTT**. Kode belum mengaktifkan kontrol perangkat lewat MQTT.
+OSPIT mengirim telemetry ke MQTT dan juga menerima command kontrol via subscribe topic.
 
 Detail lengkap ada di [`docs/MQTT.md`](docs/MQTT.md).
 
@@ -81,6 +81,7 @@ Ringkasnya:
 - Topic dibentuk dari:
   - JSON: `mqttbrkrX_channel .. nodeid .. "/data.json"`
   - CSV: `mqttbrkrX_channel .. nodeid .. "/csvlog"`
+- Topic subscribe kontrol: `subs/<nodeid>`
 
 > **Penting:** kode menggabungkan `channel` dan `nodeid` secara langsung. Jika ingin topic bertingkat normal, isi `mqttbrkr1_channel` dengan akhiran `/`, misalnya `ospit/001/`.
 
@@ -110,13 +111,13 @@ Halaman `/icontrol` dipakai untuk kontrol irigasi yang lebih spesifik.
 
 ### Status kontrol MQTT
 
-Di `telemetry.lua` memang ada handler `m:on("message", ...)`, tetapi:
+Kontrol via MQTT sekarang aktif melalui topic `subs/<nodeid>`.
 
-- tidak ada `subscribe()` yang aktif
-- payload masuk hanya dicetak ke log
-- tidak ada routing command ke valve, load, atau service
+Payload yang didukung:
 
-Artinya, **kontrol via MQTT belum diimplementasikan**.
+- `turn_ON valve_1`
+- `turn_OFF/load`
+- `{"command":"turn_ON","item":"load"}`
 
 ## Irigasi dan sensor
 

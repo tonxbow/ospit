@@ -8,13 +8,12 @@ Yang sudah ada:
 
 - koneksi ke broker MQTT
 - publish payload JSON atau CSV
+- subscribe topic kontrol output
 - dukungan broker 1 dan broker 2
 
 Yang **belum** ada:
 
-- subscribe topic command
-- parsing command MQTT
-- aksi `turn_ON` / `turn_OFF` dari pesan MQTT
+- balasan status/ack ke topic khusus
 
 ## Lokasi konfigurasi
 
@@ -105,6 +104,12 @@ Kode membentuk topic seperti ini:
   <channel><nodeid>/csvlog
   ```
 
+- Subscribe kontrol:
+
+  ```text
+  subs/<nodeid>
+  ```
+
 Contoh:
 
 - `mqttbrkr1_channel="ospit/001/"`
@@ -114,6 +119,12 @@ Hasil topic JSON:
 
 ```text
 ospit/001/ospit-demo/data.json
+```
+
+Hasil topic subscribe:
+
+```text
+subs/ospit-demo
 ```
 
 Jika `channel` tidak diakhiri `/`, topic akan menempel langsung. Contoh:
@@ -173,36 +184,58 @@ mosquitto_sub -h broker.example.com -p 1883 -t 'ospit/001/ospit-demo/csvlog' -v
 
 ## Kontrol MQTT
 
-Saat ini **tidak bisa** mengontrol:
+Kontrol output sekarang tersedia lewat topic:
+
+```text
+subs/<nodeid>
+```
+
+Contoh untuk `nodeid="ospit-demo"`:
+
+```text
+subs/ospit-demo
+```
+
+Output yang didukung:
 
 - `valve_1`
 - `valve_2`
 - `valve_3`
 - `load`
 - `mpptracker`
-- service `web`, `telnet`, `ftp`
-
-melalui MQTT, karena kode belum melakukan subscribe command topic.
-
-## Kontrol yang tersedia sekarang
-
-Gunakan web endpoint berikut setelah login:
-
-```text
-/control/turn_ON/valve_1
-/control/turn_OFF/valve_1
-/control/turn_ON/load
-/control/turn_OFF/load
-```
-
-Item lain yang didukung:
-
-- `valve_2`
-- `valve_3`
-- `mpptracker`
 - `web`
 - `telnet`
 - `ftp`
+
+Format payload yang didukung:
+
+1. Teks dengan spasi
+
+   ```text
+   turn_ON valve_1
+   turn_OFF load
+   status web
+   ```
+
+2. Teks dengan slash
+
+   ```text
+   turn_ON/valve_1
+   turn_OFF/load
+   status/web
+   ```
+
+3. JSON
+
+   ```json
+   {"command":"turn_ON","item":"valve_1"}
+   ```
+
+Contoh publish command:
+
+```bash
+mosquitto_pub -h broker.example.com -p 1883 -t 'subs/ospit-demo' -m 'turn_ON/valve_1'
+```
 
 ## Troubleshooting singkat
 
@@ -212,4 +245,4 @@ Item lain yang didukung:
 | Topic tidak sesuai harapan | `mqttbrkr1_channel` tidak diakhiri `/` |
 | Broker kedua tidak aktif | `mqttbrkr2_host` kosong |
 | Data CSV tidak berubah | `mqttbrkr1_json=true`, jadi mode CSV tidak dipakai |
-| Tidak bisa kontrol via MQTT | Memang belum diimplementasikan di kode |
+| Kontrol MQTT tidak bekerja | Broker tidak mengirim ke topic `subs/<nodeid>` |
