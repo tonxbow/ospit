@@ -40,6 +40,76 @@ pv_watt=50
 
 -- Average power consumption of the system in Ampere (A)
 av_pwr=1
+
+-- Battery profile for automatic voltage and temperature defaults
+battery_profile="AGM" -- option AGM;GEL;Flooded;LiFePO4;Custom
+
+-- Base charge end voltage in mV (used when battery_profile=Custom)
+batt_charge_voltage_mv=14100
+
+-- Temperature compensation in mV per degree C from 25C (used when battery_profile=Custom)
+batt_temp_coeff_mv_per_c=30
+
+-- Charge end voltage cap in mV when battery temp is above limit (used when battery_profile=Custom)
+batt_hot_charge_voltage_mv=13100
+
+-- Battery temperature limit in C for hot charge cap
+batt_charge_limit_temp_c=42
+
+-- Battery overheat warning threshold in C
+batt_temp_high_warn_c=40
+
+-- Battery low temperature warning threshold in C
+batt_temp_low_warn_c=-10
+
+-- Low voltage disconnect threshold for main load output in V
+low_voltage_disconnect=11.9
+
+-- Low voltage reconnect threshold for main load output in V
+low_voltage_reconnect=12.3
+
+-- Enable deep sleep when low voltage disconnect triggers
+low_voltage_sleep_enabled=true -- boolean
+
+-- Deep sleep duration in microseconds for low voltage disconnect
+low_voltage_sleep_us=300000000
+
+-- USB output voltage disconnect threshold in V
+usb_voltage_disconnect=12.8
+
+-- USB output voltage reconnect threshold in V
+usb_voltage_reconnect=13.4
+
+-- Heatsink temperature derating start threshold in C
+heatsink_derate_start_c=60
+
+-- Heatsink temperature restore threshold in C
+heatsink_derate_restore_c=58
+
+-- Charge voltage derating step in mV when heatsink is hot
+heatsink_derate_step_mv=100
+
+------ Environmental sensors
+-- Enable BME280 environmental sensor?
+bme280_enabled=false -- boolean
+
+-- I2C address for BME280 in decimal (0x76 = 118, 0x77 = 119)
+bme280_address=118
+
+-- Enable BH1750 light sensor?
+bh1750_enabled=false -- boolean
+
+-- I2C address for BH1750 in decimal (0x23 = 35, 0x5C = 92)
+bh1750_address=35
+
+-- Shared I2C SDA pin for environmental sensors
+env_i2c_sda=21
+
+-- Shared I2C SCL pin for environmental sensors
+env_i2c_scl=22
+
+-- Polling interval for environmental sensors in milliseconds
+env_sensor_interval_ms=30000
 ------ WIFI
 -- WiFi mode
 -- One of: 1 = STATION, 2 = SOFTAP, 3 = STATIONAP, 4 = NULLMODE
@@ -100,7 +170,7 @@ lat=52.4997
 long=13.3755
 
 -- Node-ID
-nodeid="001"
+nodeid="OSPIT00001"
 
 -- Verbosity level: 0 (critical errors only)
 -- up to 4 (very verbose)
@@ -118,7 +188,7 @@ mqttbrkr1_user="penta"
 -- MQTT password (leave blank for anonymous access)
 mqttbrkr1_password="penta123" -- password
 -- The telemetry channel to send our data to. 
-mqttbrkr1_channel="ospit/"
+mqttbrkr1_channel="pakebun/apps/ospit/"
 -- Close connection after sending data?
 -- Recommended if setting up 2 brokers
 mqttbrkr1_close=true -- boolean

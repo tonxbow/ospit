@@ -32,29 +32,110 @@
 -- DAC channel 1 is attached to GPIO25 - DAC channel 2 is attached to GPIO26
 -- Value: 8bit =  0 to 255
 
+local function battery_profile_defaults(profile)
+    if profile == "LiFePO4" then
+        return {
+            charge_mv = 14200,
+            temp_coeff_mv_per_c = 0,
+            hot_charge_mv = 13600,
+            low_disconnect_v = 12.0,
+            low_reconnect_v = 12.6,
+            usb_disconnect_v = 12.9,
+            usb_reconnect_v = 13.2
+        }
+    end
+    if profile == "GEL" then
+        return {
+            charge_mv = 14100,
+            temp_coeff_mv_per_c = 24,
+            hot_charge_mv = 13100,
+            low_disconnect_v = 11.9,
+            low_reconnect_v = 12.3,
+            usb_disconnect_v = 12.8,
+            usb_reconnect_v = 13.4
+        }
+    end
+    if profile == "Flooded" then
+        return {
+            charge_mv = 14400,
+            temp_coeff_mv_per_c = 30,
+            hot_charge_mv = 13300,
+            low_disconnect_v = 11.9,
+            low_reconnect_v = 12.3,
+            usb_disconnect_v = 12.8,
+            usb_reconnect_v = 13.4
+        }
+    end
+    -- AGM defaults
+    return {
+        charge_mv = 14100,
+        temp_coeff_mv_per_c = 30,
+        hot_charge_mv = 13100,
+        low_disconnect_v = 11.9,
+        low_reconnect_v = 12.3,
+        usb_disconnect_v = 12.8,
+        usb_reconnect_v = 13.4
+    }
+end
+
+local selected_profile = battery_profile or "AGM"
+local profile_cfg = battery_profile_defaults(selected_profile)
+local is_custom_profile = (selected_profile == "Custom")
+
+if batt_charge_voltage_mv == nil then batt_charge_voltage_mv = profile_cfg.charge_mv end
+if batt_temp_coeff_mv_per_c == nil then batt_temp_coeff_mv_per_c = profile_cfg.temp_coeff_mv_per_c end
+if batt_hot_charge_voltage_mv == nil then batt_hot_charge_voltage_mv = profile_cfg.hot_charge_mv end
+if low_voltage_disconnect == nil then low_voltage_disconnect = profile_cfg.low_disconnect_v end
+if low_voltage_reconnect == nil then low_voltage_reconnect = profile_cfg.low_reconnect_v end
+if usb_voltage_disconnect == nil then usb_voltage_disconnect = profile_cfg.usb_disconnect_v end
+if usb_voltage_reconnect == nil then usb_voltage_reconnect = profile_cfg.usb_reconnect_v end
+
+local cfg_charge_mv = is_custom_profile and batt_charge_voltage_mv or profile_cfg.charge_mv
+local cfg_temp_coeff_mv = is_custom_profile and batt_temp_coeff_mv_per_c or profile_cfg.temp_coeff_mv_per_c
+local cfg_hot_charge_mv = is_custom_profile and batt_hot_charge_voltage_mv or profile_cfg.hot_charge_mv
+local cfg_low_disconnect_v = is_custom_profile and low_voltage_disconnect or profile_cfg.low_disconnect_v
+local cfg_low_reconnect_v = is_custom_profile and low_voltage_reconnect or profile_cfg.low_reconnect_v
+local cfg_usb_disconnect_v = is_custom_profile and usb_voltage_disconnect or profile_cfg.usb_disconnect_v
+local cfg_usb_reconnect_v = is_custom_profile and usb_voltage_reconnect or profile_cfg.usb_reconnect_v
+
+if batt_charge_limit_temp_c == nil then batt_charge_limit_temp_c = 42 end
+if batt_temp_high_warn_c == nil then batt_temp_high_warn_c = 40 end
+if batt_temp_low_warn_c == nil then batt_temp_low_warn_c = -10 end
+if low_voltage_sleep_enabled == nil then low_voltage_sleep_enabled = true end
+if low_voltage_sleep_us == nil then low_voltage_sleep_us = 300000000 end
+if heatsink_derate_start_c == nil then heatsink_derate_start_c = 60 end
+if heatsink_derate_restore_c == nil then heatsink_derate_restore_c = 58 end
+if heatsink_derate_step_mv == nil then heatsink_derate_step_mv = 100 end
+
 -- V_out_max and V_out_max_temp in mV
-if not V_out_max then  V_out_max = 14100 end 
+if V_out_base_cfg_mv ~= cfg_charge_mv then
+    V_out_base_cfg_mv = cfg_charge_mv
+    if V_out_max_config == nil then
+        V_out_max = V_out_base_cfg_mv
+    end
+end
+if not V_out_max then V_out_max = V_out_base_cfg_mv end
 if not V_out_max_temp then V_out_max_temp = V_out_max end
 
 -- V_oc = 0
 -- Vcc = 3.07
 
 -- ptc_series_resistance_R17 = 2200
-low_voltage_disconnect = 11.9
+low_voltage_disconnect = cfg_low_disconnect_v
 
 
 if D6_loaded == nil then D6_loaded = true printv(4, "Schottky diode D6 info missing in board.lua\n Assuming it is present") end
 if D6_loaded == true then D6loss = 300 else  D6loss = 0 printv(4, "D6 not present") end 
 
-if heatsink_temperature > 60 then 
+if heatsink_temperature > heatsink_derate_start_c then 
      
      if not V_out_max_config then V_out_max_config = V_out_max end
-     V_out_max = V_out_max - 100
+    V_out_max = V_out_max - heatsink_derate_step_mv
      printv(3,"Reducing V_out_max due to high heatsink temperature to: ", V_out_max , "mV")
  
      end
 
-if heatsink_temperature < 58 and V_out_max_config ~= nil then
+if heatsink_temperature < heatsink_derate_restore_c and V_out_max_config ~= nil then
      V_out_max = V_out_max_config
      printv(3,"Restoring V_out_max due to heatsink temperature reaching acceptable level to: ", V_out_max , "mV")
      V_out_max_config = nil
@@ -202,9 +283,9 @@ function update_log()
     csvlog=table.concat(csvs,"\n")
 end
 
-V_out_max_temp = V_out_max - ((battery_temperature - 25.00) * 30)
+V_out_max_temp = V_out_max - ((battery_temperature - 25.00) * cfg_temp_coeff_mv)
 
-if battery_temperature > 42.00 then V_out_max_temp = 13100 end
+if battery_temperature > batt_charge_limit_temp_c then V_out_max_temp = cfg_hot_charge_mv end
 
 battery_temperature = battery_temperature * 100
 battery_temperature = math.floor(battery_temperature)
@@ -280,10 +361,12 @@ if V_out < low_voltage_disconnect then
         gpio.wakeup(14, gpio.INTR_LOW)
         gpio.write(14, 0)
         low_voltage_disconnect_state = 0
-        node.dsleep(300000000)
+        if low_voltage_sleep_enabled then
+            node.dsleep(low_voltage_sleep_us)
+        end
 end
     
-if V_out > 12.3 and load_disabled == false and pump_is_load==true then 
+    if V_out > cfg_low_reconnect_v and load_disabled == false and pump_is_load==true then 
        gpio.wakeup(14, gpio.INTR_HIGH)
        gpio.write(14, 1)
        low_voltage_disconnect_state = 1
@@ -292,14 +375,14 @@ end
 
 if not usb_voltage_disconnect_state then  usb_voltage_disconnect_state = 1 end 
 
-if V_out < 12.8 and usb_load and usb_load == true and shumidity3 == -127 then 
+if V_out < cfg_usb_disconnect_v and usb_load and usb_load == true and shumidity3 == -127 then 
         --gpio.wakeup(12, gpio.INTR_HIGH)
         printv(2,"Disabled USB power output")
         gpio.write(12, 0)
         usb_voltage_disconnect_state = 1
 end
     
-if V_out > 13.4 and usb_load and usb_load == true and shumidity3 == -127 and usb_voltage_disconnect_state == 1 then 
+if V_out > cfg_usb_reconnect_v and usb_load and usb_load == true and shumidity3 == -127 and usb_voltage_disconnect_state == 1 then 
        --gpio.wakeup(12, gpio.INTR_HIGH)
        usb_voltage_disconnect_state = 0
        printv(2,"Enabled USB power output")
@@ -510,9 +593,9 @@ if V_out == 0.0 then system_status = "Error: No communication with solar control
 
 battery_temperature = tonumber(battery_temperature) 
 
-if battery_temperature >= 40.0 then system_status = system_status .. "Battery overheating. " Bit_8 = 1 end
+if battery_temperature >= batt_temp_high_warn_c then system_status = system_status .. "Battery overheating. " Bit_8 = 1 end
 
-if battery_temperature <= -10.0 then system_status = system_status .. "Low battery temperature. " Bit_9 = 1 end
+if battery_temperature <= batt_temp_low_warn_c then system_status = system_status .. "Low battery temperature. " Bit_9 = 1 end
           
                     
 if 0.2 > V_out - low_voltage_disconnect or tonumber(nextreboot) < 15 then Bit_10 = 1 end

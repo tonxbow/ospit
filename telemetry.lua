@@ -3,7 +3,7 @@
 local control = require('control')
 
 local function mqtt_control_topic()
-    return "subs/" .. nodeid
+    return "ospit/subs/" .. nodeid
 end
 
 local function mqtt_normalize_command(cmd)
@@ -78,81 +78,104 @@ local function mqtt_subscribe_controls(broker, on_ready)
 end
 
 function mqtt_publish(broker)
-    local data
-    if (broker.short) then
-        data=csvs[#csvs]
-    else
-        data=csvlog
-    end
-    
-    if not (broker.json) then
-     telemetry_channel_node = (broker.channel) .. nodeid
-     mqtt_topic = telemetry_channel_node .. "/csvlog"
-     printv(2,"Prepared csv log mqtt data.")
+   
+    local function safe_get(name, def)
+        if _G[name] ~= nil then return _G[name] end
+        return def
     end
 
-    
-    -- Dynamically add soil sensor data to MQTT data packet if they are connected
-local function add_to_telemetry(target_table, key, val)
-    if val ~= -127 then
-        target_table[key] = val
+    local ts = safe_get('timestamp', 0)
+    -- try to get a readable datetime if rtctime available
+    local datetime = nil
+    if (type(ts) == 'number' and ts > 0 and os and os.date) then
+        pcall(function() datetime = os.date("!%Y-%m-%dT%H:%M:%SZ", ts) end)
     end
-end
 
-if (broker.json) then 
-    data = {
-        timeToShutdown = nextreboot,
-        openCircuitVoltage = V_oc,
-        airTemperature = airtemp, 
-        heatsink_temperature = heatsink_temperature,
-        tankGauge = tankgauge,
-        mppVoltage = V_in,
-        batteryVoltage = V_out,
-        batteryChargeEstimate = charge_state_int,
-        batteryHealthEstimate = health_estimate,
-        batteryTemperature = battery_temperature,
-        freeRAM = freeRAM
+    local device_tbl = {
+        id = nodeid,
+        device = nodeid,
+        serial = nodeid,
+        uptime = (node and node.uptime) and math.floor(node.uptime()/1000000) or 0,
+        ts = ts,
+        datetime = datetime
     }
 
-    add_to_telemetry(data, "SoilHumiditySection1", shumidity1)
-    add_to_telemetry(data, "SoilTemperatureSection1", stemp1)
-    
-    add_to_telemetry(data, "SoilHumiditySection2", shumidity2)
-    add_to_telemetry(data, "SoilTemperatureSection2", stemp2)
-    
-    add_to_telemetry(data, "SoilHumiditySection3", shumidity3)
-    add_to_telemetry(data, "SoilTemperatureSection3", stemp3)
-    
-    add_to_telemetry(data, "SoilHumiditySection4", shumidity4)
-    add_to_telemetry(data, "SoilTemperatureSection4", stemp4)
-end
-         
-    printv(2,"Creating JSON payload.")
-    sjson.encode(data)
-    ok, json = pcall(sjson.encode, data)
-    if ok then
-        
-        data = json
-        --print("JSON payload:", data)
-    else
-        printv(1,"MQTT ERROR: Encoding to JSON failed!")
+
+    local others = { heap = (node and node.heap) and node.heap() or safe_get('freeRAM', safe_get('freeRAM', 0)) }
+
+    -- Sensors: soil sensors separated
+    local sensors = {}
+    local function add_sensor(prefix, val)
+        if val ~= nil and val ~= -127 then sensors[prefix] = val end
+    end
+
+    add_sensor('airTemperature', safe_get('airtemp', nil))
+    add_sensor('soilHumidity1', safe_get('shumidity1', nil))
+    add_sensor('soilTemperature1', safe_get('stemp1', nil))
+    add_sensor('soilHumidity2', safe_get('shumidity2', nil))
+    add_sensor('soilTemperature2', safe_get('stemp2', nil))
+    add_sensor('soilHumidity3', safe_get('shumidity3', nil))
+    add_sensor('soilTemperature3', safe_get('stemp3', nil))
+    add_sensor('soilHumidity4', safe_get('shumidity4', nil))
+    add_sensor('soilTemperature4', safe_get('stemp4', nil))
+    add_sensor('soilTemperature4', safe_get('stemp4', nil))
+    add_sensor('soilTemperature4', safe_get('stemp4', nil))
+    add_sensor('airTemperature',safe_get('airtemp', nil))
+    add_sensor('batteryTemperature',safe_get('battery_temperature', nil))
+    add_sensor('tankGauge',safe_get('tankgauge', nil))
+    add_sensor('bme280Temperature', safe_get('bme280_temperature', nil))
+    add_sensor('bme280Humidity', safe_get('bme280_humidity', nil))
+    add_sensor('bme280Pressure', safe_get('bme280_pressure', nil))
+    add_sensor('bh1750Lux', safe_get('bh1750_lux', nil))
+
+    -- Voltage/power sensors (include Vsolar, battery_temperature, airtemp)
+    local voltage = {
+        batteryVoltage = safe_get('V_out', nil),
+        mppVoltage = safe_get('V_in', nil),
+        Vsolar = safe_get('V_oc', nil)
+    }
+
+    -- Compose final payload (removed sys and pumps)
+    -- Determine load/output statuses
+    local load_on = false
+    -- load_on true when not disabled and no low-voltage trip
+    load_on = not (safe_get('load_disabled', false) or (safe_get('low_voltage_disconnect_state', low_voltage_disconnect_state) ~= 1))
+
+    local outputs = {
+        load = load_on,
+        valve_1 = safe_get('valve_1_state', safe_get('valve_1_enabled', false)),
+        valve_2 = safe_get('valve_2_state', safe_get('valve_2_enabled', false)),
+        valve_3 = safe_get('valve_3_state', safe_get('valve_3_enabled', false))
+    }
+
+    local payload = {
+        id = device_tbl.id,
+        uptime = device_tbl.uptime,
+        ts = device_tbl.ts,
+        datetime = device_tbl.datetime,
+        outputs = outputs,
+        sensors = sensors,
+        voltage = voltage,
+        mcu = others
+    }
+
+    printv(2, "Creating structured JSON payload for MQTT")
+    local ok, json = pcall(sjson.encode, payload)
+    if not ok then
+        printv(1, "MQTT ERROR: Encoding structured payload failed")
         return
     end
-    
-    telemetry_channel_node = (broker.channel) .. nodeid
-    mqtt_topic = telemetry_channel_node .. "/data"
-    --[[ Modification for home assistant ]]--
-    --[[mqtt_topic = (broker.channel) .. "sensor/" .. nodeid .. "/config" ]]--
-    
-    
-printv(2,"mqtt_topic: ", mqtt_topic)
-printv(2,"########## MQTT broker host:", broker.host)
-printv(2,"Sending this MQTT Data set:", data)
 
-    broker.m:publish(mqtt_topic, data, 1, 0, function(client)
-        printv(2,"########## Success: MQTT message sent.")
+    local telemetry_channel_node = (broker.channel or "") .. nodeid
+    local mqtt_topic = telemetry_channel_node .. "/data"
+
+    printv(2, "mqtt_topic:", mqtt_topic)
+    printv(3, "payload:", json)
+
+    broker.m:publish(mqtt_topic, json, 1, 0, function(client)
+        printv(2, "Success: Structured MQTT payload sent to " .. mqtt_topic)
         if (broker.close and broker.subscribe_topic == nil) then
-            broker.m=nil
+            broker.m = nil
         end
     end)
 end
